@@ -1,50 +1,57 @@
 from sanic.response import json
 from offers.tables import offers_table
-from sanic.exceptions import Unauthorized, InvalidUsage
+from sanic.exceptions import InvalidUsage
 
 
 def setup_routes(app):
-    pass
-    # @app.post("/offer/create")
-    # async def create_offer(request):
-    #     payload = request.json
-    #     try:
-    #         username = payload['username']
-    #         email = payload['email']
-    #         password = payload['password']
-    #     except KeyError:
-    #         raise InvalidUsage("Invalid message format")
-    #
-    #     query = users_table.insert().values(
-    #         username=username,
-    #         email=email,
-    #         password=sha256_crypt.hash(password)
-    #     )
-    #     try:
-    #         await request.app.ctx.db.execute(query)
-    #     except UniqueViolationError:
-    #         raise InvalidUsage("User already exists")   # or 409?
-    #     return json({}, status=201)
-    #
-    # @app.post("/offer/")
-    # async def get_offers(request):
-    #     payload = request.json
-    #     try:
-    #         username = payload['username']
-    #         password = payload['password']
-    #     except KeyError:
-    #         raise InvalidUsage("Invalid message format")
-    #     #query = users.select([users.c.id, users.c.password]) #.where(users.c.username == 'user')
-    #     query = users_table.select().where(users_table.c.username == username)
-    #     row = await request.app.ctx.db.fetch_one(query)
-    #     if row is None:
-    #         raise Unauthorized("Invalid credentials")
-    #     user_id, hash_pass = row[0], row[3]
-    #     if sha256_crypt.verify(password, hash_pass):
-    #         token = await generate_token(user_id)
-    #     else:
-    #         raise Unauthorized("Invalid credentials")
-    #     return json({'user_id': user_id, 'token': token})
+
+    @app.post("/offer/create")
+    async def create_offer(request):
+        payload = request.json
+        try:
+            user_id = int(payload['user_id'])
+            title = payload['title']
+            text = payload['text']
+        except Exception:
+            raise InvalidUsage("Invalid message format")
+
+        # check user existance
+
+        # add order to db
+        query = offers_table.insert().values(
+            user_id=user_id,
+            title=title,
+            text=text
+        )
+        await request.app.ctx.db.execute(query)
+        return json({}, status=201)
+
+    @app.post("/offer/")
+    async def get_offers(request):
+        payload = request.json
+        if "offer_id" in payload:
+            try:
+                offer_id = int(payload["offer_id"])
+            except ValueError:
+                raise InvalidUsage("Invalid message format")
+            query = offers_table.select().where(offers_table.id == offer_id)
+            row = await request.app.ctx.db.fetch_one(query)
+            if row is None:
+                return json([])
+            return json({'user_id': row[1], 'title': row[2], 'text': row[3]})
+        elif "user_id" in payload:
+            try:
+                user_id = int(payload["user_id"])
+            except ValueError:
+                raise InvalidUsage("Invalid message format")
+            query = offers_table.select().where(offers_table.user_id == user_id)
+            rows = await request.app.ctx.db.fetch_all(query)
+            if rows is None:
+                return json([])
+            return json([{'offer_id': row[0],  'title': row[2], 'text': row[3]} for row in rows])
+        else:
+            raise InvalidUsage("Invalid message format")
+
     #
     #
     # @app.route("/")
