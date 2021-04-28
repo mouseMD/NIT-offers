@@ -15,8 +15,6 @@ def setup_routes(app):
         except Exception:
             raise InvalidUsage("Invalid message format")
 
-        # check user existance
-
         # add order to db
         query = offers_table.insert().values(
             user_id=user_id,
@@ -34,7 +32,7 @@ def setup_routes(app):
                 offer_id = int(payload["offer_id"])
             except ValueError:
                 raise InvalidUsage("Invalid message format")
-            query = offers_table.select().where(offers_table.id == offer_id)
+            query = offers_table.select().where(offers_table.c.id == offer_id)
             row = await request.app.ctx.db.fetch_one(query)
             if row is None:
                 return json([])
@@ -44,18 +42,10 @@ def setup_routes(app):
                 user_id = int(payload["user_id"])
             except ValueError:
                 raise InvalidUsage("Invalid message format")
-            query = offers_table.select().where(offers_table.user_id == user_id)
+            query = offers_table.select().where(offers_table.c.user_id == user_id)
             rows = await request.app.ctx.db.fetch_all(query)
             if rows is None:
                 return json([])
             return json([{'offer_id': row[0],  'title': row[2], 'text': row[3]} for row in rows])
         else:
             raise InvalidUsage("Invalid message format")
-
-    #
-    #
-    # @app.route("/")
-    # async def test(request):
-    #     query = users_table.select()
-    #     rows = await request.app.ctx.db.fetch_all(query)
-    #     return json([{'id': row[0], 'username': row[1], 'email': row[2], 'password': row[3]} for row in rows])
