@@ -1,0 +1,17 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+sanic = "*"
+environs = "*"
+databases = {extras = ["postgresql"], version = "*"}
+sqlalchemy = "*"
+psycopg2-binary = "*"
+offers = {editable = true, path = "."}
+
+[dev-packages]
+
+[requires]
+python_version = "3.7"
