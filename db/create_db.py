@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String, Text
+from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String, Text, inspect
 
 DB_URL = 'postgresql://admin:admin@localhost/offers'
 engine = create_engine(DB_URL)
@@ -12,7 +12,9 @@ table = Table('offers', metadata,
               Column('text', Text)
               )
 
-table.drop(engine)
+inspector = inspect(engine)
+if 'users' in inspector.get_table_names():
+    table.drop(engine)
 table.create(engine)
 
 for _t in metadata.tables:
